@@ -1,0 +1,42 @@
+# Original: FROM openhorizon/aarch64-tx2-cudabase
+# this is an experimental docker file that should eventually support TX2's onboard camera
+#FROM cudabase
+FROM w251/keras:dev-tx2-4.3_b132-tf1
+RUN apt update && apt install python3-matplotlib python3-pil wget -y
+###### install the c++ version of protobuf ####
+RUN pip3 uninstall -y protobuf
+RUN pip3 install cython
+RUN mkdir /protobuf
+WORKDIR /protobuf
+RUN git clone -b '3.6.x' https://github.com/google/protobuf.git . && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr/local
+RUN make -j6 && make install
+RUN ldconfig
+WORKDIR /protobuf/python
+RUN python3 setup.py build --cpp_implementation
+RUN python3 setup.py install --cpp_implementation
+RUN rm -fr /protobuf
+# Install package dependencies
+RUN apt-get update && apt-get install -y git pkg-config wget
+RUN apt-get install -y libgtk2.0-dev pkg-config build-essential cmake libcanberra-gtk-module libcanberra-gtk3-module
+RUN apt-get install -y python-pip
+# RUN apt-get install -y libgstreamer-plugins-base1.0-0 libgstreamer1.0 libgstreamer-plugins-good1.0-0 libgstreamer-plugins-good1.0-dev
+#Install OpenCV. The first commented line is an older version
+# RUN apt-get install -y libopencv-dev
+WORKDIR /
+RUN git clone https://github.com/AlexanderRobles21/OpenCVTX2
+WORKDIR /OpenCVTX2
+RUN sed -i '72i -D WITH_LIBV4L=ON \\' buildOpenCV.sh
+RUN sh buildOpenCV.sh
+WORKDIR /root/opencv/build
+RUN make
+RUN sudo make install
+WORKDIR /notebooks
+###########
+RUN git clone --recursive https://github.com/NVIDIA-Jetson/tf_trt_models.git
+WORKDIR tf_trt_models
+RUN ./install.sh python3
+RUN pip3 install paho-mqtt
+WORKDIR /data
+RUN wget https://github.com/yeephycho/tensorflow-face-detection/blob/master/model/frozen_inference_graph_face.pb?raw=true -O /data/frozen_inference_graph_face.pb

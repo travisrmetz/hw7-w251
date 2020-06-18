@@ -1,0 +1,8 @@
+FROM ubuntu
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y git pkg-config wget build-essential cmake unzip curl \
+	python3-pip mosquitto-clients python3-opencv
+
+RUN pip3 install paho-mqtt
+RUN apt install -y s3fs

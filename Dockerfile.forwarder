@@ -1,0 +1,7 @@
+FROM python:3.7-alpine   
+RUN apk update && apk add mosquitto-clients
+#RUN apk add mosquitto
+#RUN apk add python
+#RUN pip install numpy
+RUN pip install paho-mqtt
+

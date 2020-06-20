@@ -1,4 +1,4 @@
-### W251 hw3
+### W251 hw7
 #### Travis Metz, Tuesday 2pm PST
 
 I got the face detector up and running and passing all the way through to s3 object storage in cloud.  But this was a very hard assignment for me!  The simplest things took me forever.
@@ -20,35 +20,51 @@ I am not happy with a few things in retrospect and would work on the following t
 3.  While I do have Dockerfiles for each of the containers, I did not automate the rest of the running of the various containers.
 
 
+
+#### set up docker network on jetson
+```docker network create --driver bridge hw7```
+
+#### build images if do not exist
+docker build -t fd7-image -f Dockerfile.face_detector .
+
+
 #### get opencv face processor running
 
-```docker run -e DISPLAY=$DISPLAY --privileged --name fd1 --net host -v /home/trmetz/hw3:/hw3 -ti fd```
+```docker run -e DISPLAY=$DISPLAY --privileged --name fd7 --net host -v /home/trmetz/trm/hw7:/hw7 -ti fd7-image```
 
-From within /hw3, ```python3 video.py```
+From within /hw7, ```python3 video.py```
 
 #### get broker running
 
-```docker run --name mosq-broker -p 1883:1883 -v /home/trmetz/hw3:/hw3 --network hw03 -ti broker-image mosquitto```
+```docker run --name mosq-broker -p 1883:1883 -v /home/trmetz/trm/hw7:/hw7 --network hw7 -ti broker-image mosquitto```
 
 #### get forwarder running
 
-```docker run --name forwarder --network hw03 -v /home/trmetz/hw3:/hw3 -ti forwarder-image sh```
+```docker run --name forwarder --network hw7 -v /home/trmetz/trm/hw7:/hw7 -ti forwarder-image sh```
 
-From within /hw3, ```python3 forwarder.py```
+From within /hw7, ```python3 forwarder.py```
+
+#### ssh to cloud machine
+from TRM laptop (which has proper key)
+this is same VS that ran hw3
+```ssh root@169.62.39.215```
+
+#### set up docker network in cloud
+```docker network create --driver bridge hw7-cloud```
 
 #### from cloud, start cloud broker running
 
-```docker run --name broker --network hw03-cloud -p 1883:1883 -ti broker-image mosquitto```
+```docker run --name broker --network hw7-cloud -p 1883:1883 -ti broker-image mosquitto```
 
 #### from cloud, start cloud processor running
 
-```docker run --name cloud_processor -v /root/w251_trm:/hw3 --privileged --network hw03-cloud -ti cloud-processor-image bash```
+```docker run --name cloud_processor -v /root/w251_trm:/hw7 --privileged --network hw7-cloud -ti cloud-processor-image bash```
 
 Set up S3 within that cloud processor:
 
-```s3fs s3-trm /hw3/mybucket -o passwd_file=/hw3/.cos_creds -o sigv2 -o use_path_request_style -o url=https://s3.us-east.objectstorage.softlayer.net```
+```s3fs s3-trm /hw7/mybucket -o passwd_file=/hw7/.cos_creds -o sigv2 -o use_path_request_style -o url=https://s3.us-east.objectstorage.softlayer.net```
 
-From within /hw3, ```python3 processor.py```
+From within /hw7, ```python3 processor.py```
 
 
 #### ssh IBM

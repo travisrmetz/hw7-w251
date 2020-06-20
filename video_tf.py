@@ -14,6 +14,7 @@ from tf_trt_models.detection import download_detection_model, build_detection_gr
 
 import cv2
 import paho.mqtt.client as mqtt
+import io
 
 cap = cv2.VideoCapture(0)
 print(cap)
@@ -21,20 +22,8 @@ print(cap)
 #face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 ret, frame=cap.read()
 
-#MQTT_HOST="172.18.0.2"
-#MQTT_HOST="broker"
-#MQTT_PORT=1883
-#MQTT_TOPIC="faces_topic"
-#mqttclient = mqtt.Client()
-#mqttclient.connect(MQTT_HOST, MQTT_PORT, 3600)
 
-#while(True):
-# Capture frame-by-frame
-#    ret, frame = cap.read()
-#    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    #cv2.imshow('frame',gray)
-    #cv2.waitKey(0)
 
 
 
@@ -133,6 +122,29 @@ for i in range(int(num_detections)):
 
 plt.show()
 plt.savefig('output.png')
+
+buf = io.BytesIO()
+plt.savefig(buf, format='png')
+buf.seek(0)
+im = Image.open(buf)
+im.show()
+buf.seek(0)
+msg=buf 
+buf.close()
+
+
+MQTT_HOST="172.18.0.2"
+MQTT_HOST="broker"
+MQTT_PORT=1883
+MQTT_TOPIC="faces_topic"
+mqttclient = mqtt.Client()
+mqttclient.connect(MQTT_HOST, MQTT_PORT, 3600)
+
+#rc,png = cv2.imencode('.png', face)
+#        msg = png.tobytes()
+#        #print (len(png))
+        
+mqttclient.publish(MQTT_TOPIC, payload=msg, qos=0, retain=False)
 
 tf_sess.close()
 

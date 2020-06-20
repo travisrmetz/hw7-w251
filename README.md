@@ -1,7 +1,11 @@
 ### W251 hw7
 #### Travis Metz, Tuesday 2pm PST
 
-I got the face detector up and running and passing all the way through to s3 object storage in cloud.  But this was a very hard assignment for me!  The simplest things took me forever.
+I got the face detector up and running using the tensorflow model.  You can see the face detector box in the output.png file in this repo.
+
+I was not able to get the full HW3 sequence going (mosquitto broker, forwarder, cloud broker, cloud processor, etc).  I tried for quite some time, but my HW3 code was clunky and after spending many hours working on it, I decided I needed to move on to other assignments.  (I needed to better document that HW3 code and make it more self-sufficient in terms of setup scripts etc.  Lesson for the future.)
+
+#### Notes on how it should all work
 
 I have five containers running.  My start to finish:
 - on Jetson, a l4t base image using opencv to capture faces and publish to Jetson broker
@@ -14,13 +18,6 @@ I left mosquitto QoS at zero.  This means that, at end of pipeline, I am not sto
 
 My topic is named 'faces_topic'.
 
-I am not happy with a few things in retrospect and would work on the following things if I had more time.
-1.  My S3 file storage is kludgy.  I could not pass through a mount to my S3 bucket so had to mount it from within container.  That seems suboptimal, especially because to automate that you would have to put credentials in a script.
-2.  When it is working it rarely breaks.  But if you bring down one of the containers you have to restart a number of the containers to remake the connections.  Also I ended up setting timeouts longer as default was set at 60 seconds for client connections between mosquitto entities.
-3.  While I do have Dockerfiles for each of the containers, I did not automate the rest of the running of the various containers.
-
-
-
 #### set up docker network on jetson
 ```docker network create --driver bridge hw7```
 
@@ -32,7 +29,7 @@ docker build -t fd7-image -f Dockerfile.face_detector .
 
 ```docker run -e DISPLAY=$DISPLAY --privileged --name fd7 --net host -v /home/trmetz/trm/hw7:/hw7 -ti fd7-image```
 
-From within /hw7, ```python3 video.py```
+From within /hw7, ```python3 video_tf.py```
 
 #### get broker running
 
@@ -43,11 +40,6 @@ From within /hw7, ```python3 video.py```
 ```docker run --name forwarder --network hw7 -v /home/trmetz/trm/hw7:/hw7 -ti forwarder-image sh```
 
 From within /hw7, ```python3 forwarder.py```
-
-#### ssh to cloud machine
-from TRM laptop (which has proper key)
-this is same VS that ran hw3
-```ssh root@169.62.39.215```
 
 #### set up docker network in cloud
 ```docker network create --driver bridge hw7-cloud```
@@ -69,18 +61,8 @@ From within /hw7, ```python3 processor.py```
 
 #### ssh IBM
 
-To get to IBM VSI that is running two containers for pictures
+To get to IBM VSI that is running two containers for pictures (this is from laptop, not from jumpbox VS)
 
 ```ssh root@169.62.39.215 -i .ssh/id_rsa```
 
 When jetson  stops - restart the opencv python program - that times out with broker
-
-#### Links to various pictures stored in my S3 bucket
-It stored hundreds in very short period of time!
-
-https://s3-trm.s3.us-east.cloud-object-storage.appdomain.cloud/face_1589758576.png
-
-https://s3-trm.s3.us-east.cloud-object-storage.appdomain.cloud/face_1589758625.png
-
-https://s3-trm.s3.us-east.cloud-object-storage.appdomain.cloud/face_1589759859.png
-# hw7-w251
